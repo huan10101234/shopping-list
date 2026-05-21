@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉伊卡哇與夥伴們的爆買清單 🧳</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kosugi Maru', 'Microsoft JhengHei', sans-serif;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-[#FFF0F5] text-[#4B4B4B] min-h-screen pb-10">
+
+    <div id="loginScreen" class="max-w-md mx-auto px-6 pt-12">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border-4 border-[#E0F2FE] text-center">
+            <div class="text-5xl mb-3">🎒</div>
+            <h1 class="text-2xl font-bold mb-2 text-[#4B4B4B]">吉伊卡哇出國連線清單</h1>
+            <p class="text-sm text-gray-400 mb-6">和朋友一起開房間，即時同步採買吧！</p>
+
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-sm font-bold mb-1 pl-1">🔑 輸入群組房間號碼</label>
+                    <input type="text" id="groupId" placeholder="例如：tokyo2026" class="w-full border-2 border-gray-200 p-3 rounded-2xl focus:outline-none focus:border-[#FEF08A] bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1 pl-1">📝 你的暱稱</label>
+                    <input type="text" id="username" placeholder="例如：小美" class="w-full border-2 border-gray-200 p-3 rounded-2xl focus:outline-none focus:border-[#FEF08A] bg-gray-50">
+                </div>
+                
+                <div>
+    <label class="block text-sm font-bold mb-2 pl-1">🌟 挑選你的連線角色</label>
+    <div class="grid grid-cols-4 gap-2" id="roleSelector">
+        <button type="button" onclick="selectRole('chiikawa', this)" class="role-btn border-4 border-[#4B4B4B] bg-[#FFF0F5] p-2 rounded-2xl text-center focus:outline-none transition transform hover:scale-105">
+            <img src="https://img2.91mai.com/o2o/image/cc99fb35-c605-4666-9cf7-6058c47f7645.jpg" alt="吉伊" class="w-12 h-12 mx-auto object-contain">
+            <div class="text-xs font-bold mt-1">吉伊</div>
+        </button>
+        <button type="button" onclick="selectRole('hachiware', this)" class="role-btn border-4 border-transparent bg-[#E0F2FE] p-2 rounded-2xl text-center focus:outline-none transition transform hover:scale-105">
+            <img src="https://img2.91mai.com/o2o/image/65431ff4-7c34-49e3-9240-5d92ace16fab.jpg" alt="小八" class="w-12 h-12 mx-auto object-contain">
+            <div class="text-xs font-bold mt-1">小八</div>
+        </button>
+        <button type="button" onclick="selectRole('usagi', this)" class="role-btn border-4 border-transparent bg-[#FEF08A] p-2 rounded-2xl text-center focus:outline-none transition transform hover:scale-105">
+            <img src="https://img2.91mai.com/o2o/image/60817ea8-a092-4239-a4fe-2eb0a8db4b8e.jpg" alt="兔兔" class="w-12 h-12 mx-auto object-contain">
+            <div class="text-xs font-bold mt-1">兔兔</div>
+        </button>
+        <button type="button" onclick="selectRole('momonga', this)" class="role-btn border-4 border-transparent bg-purple-100 p-2 rounded-2xl text-center focus:outline-none transition transform hover:scale-105">
+            <img src="https://img2.91mai.com/o2o/image/353a710a-89cb-439f-ab29-7d9e88824f91.jpg" alt="飛鼠" class="w-12 h-12 mx-auto object-contain">
+            <div class="text-xs font-bold mt-1">飛鼠</div>
+        </button>
+    </div>
+</div>
+                </div>
+            </div>
+
+            <button id="enterBtn" class="w-full bg-[#FEF08A] text-[#4B4B4B] p-3 rounded-2xl font-bold mt-6 shadow-sm border-b-4 border-yellow-300 hover:bg-yellow-200 active:translate-y-0.5 transition">
+                嗚拉！進入房間 🎉
+            </button>
+        </div>
+    </div>
+
+
+    <div id="mainScreen" class="hidden">
+        <header class="bg-white text-[#4B4B4B] border-b-4 border-[#E0F2FE] sticky top-0 z-10 px-4 py-4 shadow-sm flex justify-between items-center">
+            <div>
+                <h1 class="font-bold text-lg flex items-center gap-1">
+                    🛍️ <span id="displayGroupName">房間名稱</span>
+                </h1>
+                <p class="text-xs text-gray-400">目前身分：<span id="displayUser">角色</span></p>
+            </div>
+            <button onclick="leaveRoom()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full font-bold">
+                換房間 🚪
+            </button>
+        </header>
+
+        <main class="max-w-md mx-auto px-4 mt-6">
+            <section class="bg-white p-5 rounded-3xl shadow-sm mb-6 border-2 border-[#E0F2FE]">
+                <h2 class="text-md font-bold mb-3 flex items-center gap-1">➕ 想買什麼呢？</h2>
+                <div class="space-y-3">
+                    <input type="text" id="itemName" placeholder="商品名稱 (如：藥妝店維他命)" class="w-full border-2 border-gray-100 p-2.5 rounded-2xl focus:outline-none focus:border-[#FEF08A]">
+                    <input type="url" id="itemUrl" placeholder="介紹連結 (選填)" class="w-full border-2 border-gray-100 p-2.5 rounded-2xl focus:outline-none focus:border-[#FEF08A]">
+                    <textarea id="itemNote" placeholder="備註 (數量/幫誰買/金額...)" class="w-full border-2 border-gray-100 p-2.5 rounded-2xl focus:outline-none focus:border-[#FEF08A]" rows="2"></textarea>
+                    
+                    <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-2xl border-2 border-dashed border-gray-200">
+                        <span class="text-xs text-gray-400">貼心附圖 (店員更好找)：</span>
+                        <input type="file" id="itemImage" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#E0F2FE] file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+
+                    <button id="addBtn" class="w-full bg-[#FEF08A] p-2.5 rounded-2xl font-bold shadow-sm border-b-4 border-yellow-300 hover:bg-yellow-200 transition">
+                        放進許願池 ✨
+                    </button>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-md font-bold mb-3 flex justify-between items-center px-1">
+                    <span>🛒 大家要買的東西</span>
+                    <span id="itemCount" class="text-xs bg-[#E0F2FE] text-blue-800 px-2.5 py-1 rounded-full font-bold">0 項</span>
+                </h2>
+                <div id="listContainer" class="space-y-4">
+                    </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
