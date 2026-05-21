@@ -1,7 +1,7 @@
 // ==========================================================================
 // 🌌 核心設定：雲端即時資料庫 (Supabase) 的連線密鑰
 // ==========================================================================
-// 晚點我們會去 Supabase 網站後台複製這兩個重要欄位填進來唷！
+// 🔥 修正關鍵：移除結尾的 /rest/v1，只留到 .co 結尾，配合 SDK 的自動路徑疊加！
 const SUPABASE_URL = 'https://cdwldlweaeidkbnypebe.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkd2xkbHdlYWVpZGtibnlwZWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjk1NjYsImV4cCI6MjA5NDk0NTU2Nn0.bDNPIgJdaNizGxBGyHZ2lQy5cGrnS3W3z4xaSOVSdJY';
 
@@ -64,7 +64,6 @@ enterBtn.addEventListener('click', async () => {
     currentGroup = group;
     currentName = name;
 
-    // ✨ 修正 Bug 2：將原本 textContent 換成 innerHTML，才能成功塞入可愛大頭貼標籤
     displayGroupName.textContent = `房間：${currentGroup}`;
     displayUser.innerHTML = `
         <img src="${roleConfig[currentRole].img}" class="w-5 h-5 inline-block rounded-full mr-1 object-contain align-middle">
@@ -74,7 +73,7 @@ enterBtn.addEventListener('click', async () => {
     loginScreen.classList.add('hidden');
     mainScreen.classList.remove('hidden');
 
-    // 🚀 初始化 Supabase 並撈取即時雲端資料
+    // 🚀 初始化 Supabase 并撈取即時雲端資料
     initSupabase();
 });
 
@@ -90,25 +89,17 @@ window.leaveRoom = function() {
 let supabaseClient = null;
 
 function initSupabase() {
-    // 防呆：如果尚未填入正確 Key，先改用本地 localStorage 模擬，避免網頁壞掉
-    if (SUPABASE_URL.includes('你的專案代碼')) {
-        console.warn("⚠️ 目前偵測到尚未設定 Supabase 連線密鑰，系統自動切換為本機 localStorage 模擬模式！");
-        shoppingList = JSON.parse(localStorage.getItem(`group_${currentGroup}`)) || [];
-        renderList();
-        return;
-    }
-
     // 1. 初始化連線客戶端
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // 2. 抓取雲端上屬於這個房間的全部購物卡片
     fetchItems();
 
-    // 3. 🔥 開啟 Realtime 魔法：監聽全世界的手機，只要資料庫有變動就「免整理即時刷新」！
+    // 3. 🔥 開啟 Realtime 魔法
     supabaseClient
         .channel('schema-db-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items' }, () => {
-            fetchItems(); // 資料庫有任何人新增、打勾、刪除，所有人的手機同步重新撈取最新狀態
+            fetchItems();
         })
         .subscribe();
 }
@@ -120,7 +111,7 @@ async function fetchItems() {
         .from('shopping_items')
         .select('*')
         .eq('group_id', currentGroup)
-        .order('id', { ascending: false }); // 讓最新新增的排在最上面
+        .order('id', { ascending: false });
 
     if (error) {
         console.error('抓取雲端資料失敗:', error);
@@ -167,15 +158,8 @@ async function saveItem(name, url, note, imageBase64) {
     };
 
     if (supabaseClient) {
-        // 連線模式：直接塞入雲端資料庫
         const { error } = await supabaseClient.from('shopping_items').insert([newItem]);
         if (error) alert('雲端儲存失敗：' + error.message);
-    } else {
-        // 模擬模式：寫入本機
-        const localItem = { id: Date.now(), ...newItem, isBought: false, creatorRole: currentRole };
-        shoppingList.unshift(localItem);
-        localStorage.setItem(`group_${currentGroup}`, JSON.stringify(shoppingList));
-        renderList();
     }
     clearForm();
 }
@@ -195,7 +179,6 @@ function renderList() {
     shoppingList.forEach(item => {
         const card = document.createElement('div');
         
-        // 為了相容 Supabase (底線) 與 LocalStorage 的欄位命名差別
         const isBought = item.is_bought !== undefined ? item.is_bought : item.isBought;
         const creatorRole = item.creator_role || item.creatorRole || 'chiikawa';
         const itemId = item.id;
@@ -204,7 +187,6 @@ function renderList() {
         
         card.className = `bg-white rounded-2xl shadow-sm overflow-hidden border-2 transition ${isBought ? 'opacity-40 border-gray-100' : 'border-[#E0F2FE]'}`;
         
-        // ✨ 修正 Bug 1：將原本顯示文字 ${role.emoji} 的位子，優雅換成超精緻的圓滾滾角色頭像 <img> 標籤
         card.innerHTML = `
             <div class="p-4 flex gap-3">
                 ${item.image ? `<img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl border flex-shrink-0">` : `
@@ -243,13 +225,6 @@ window.toggleStatus = async function(id, currentStatus) {
     if (supabaseClient) {
         const { error } = await supabaseClient.from('shopping_items').update({ is_bought: nextStatus }).eq('id', id);
         if (error) alert('修改失敗：' + error.message);
-    } else {
-        shoppingList = shoppingList.map(item => {
-            if (item.id === id) item.isBought = nextStatus;
-            return item;
-        });
-        localStorage.setItem(`group_${currentGroup}`, JSON.stringify(shoppingList));
-        renderList();
     }
 
     // 🐰 療癒小彩蛋
@@ -265,10 +240,6 @@ window.deleteItem = async function(id) {
     if (supabaseClient) {
         const { error } = await supabaseClient.from('shopping_items').delete().eq('id', id);
         if (error) alert('刪除失敗：' + error.message);
-    } else {
-        shoppingList = shoppingList.filter(item => item.id !== id);
-        localStorage.setItem(`group_${currentGroup}`, JSON.stringify(shoppingList));
-        renderList();
     }
 };
 
