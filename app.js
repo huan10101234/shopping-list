@@ -2,7 +2,7 @@
 // 🌌 核心設定：雲端即時資料庫 (Supabase) 的連線密鑰
 // ==========================================================================
 // 晚點我們會去 Supabase 網站後台複製這兩個重要欄位填進來唷！
-const SUPABASE_URL = 'https://cdwldlweaeidkbnypebe.supabase.co/rest/v1';
+const SUPABASE_URL = 'https://cdwldlweaeidkbnypebe.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkd2xkbHdlYWVpZGtibnlwZWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNjk1NjYsImV4cCI6MjA5NDk0NTU2Nn0.bDNPIgJdaNizGxBGyHZ2lQy5cGrnS3W3z4xaSOVSdJY';
 
 // ==========================================================================
